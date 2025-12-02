@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Pet Adoption Gallery</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg:#fffaf0;         /* page background */
+      --card:#fff9d9;       /* card / panel */
+      --muted:#776b3f;      /* muted text */
+      --accent:#f7c948;     /* yellow accent */
+      --accent-dark:#e6b800;
+      --border:#efe7b8;
+      --shadow: 0 6px 18px rgba(35,30,10,0.06);
+      --radius:12px;
+      --gap:12px;
+    }
+
+    html,body{height:100%}
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: linear-gradient(180deg, var(--bg), #fff);
+      color:#241f12;
+      padding:28px;
+      margin:0;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .wrap { max-width:1130px; margin:0 auto; }
+
+    header { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+    .title-row { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+    h1 { margin:0; font-size:28px; color:#2e2406; letter-spacing:0.2px; }
+    .lead { color:var(--muted); font-size:14px; }
+
+    .intro-video {
+      border-radius: var(--radius);
+      overflow:hidden;
+      background:#000;
+      box-shadow:var(--shadow);
+      border:1px solid var(--border);
+      margin-bottom:18px;
+      height:500px;
+    }
+    .intro-video iframe, .intro-video video { width:100%; height:100%; display:block; }
+
+    .thumb-row { display:flex; gap:var(--gap); flex-wrap:wrap; margin-top:12px; }
+
+    .thumb {
+      width:160px;
+      text-decoration:none;
+      color:inherit;
+      background:linear-gradient(180deg, #fff, var(--card));
+      border-radius:10px;
+      padding:8px;
+      box-shadow:var(--shadow);
+      border:1px solid var(--border);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      transition: transform 160ms ease, box-shadow 160ms ease, outline 120ms ease;
+      min-height:170px;
+      justify-content:flex-start;
+    }
+    .thumb:hover { transform: translateY(-6px); box-shadow: 0 18px 30px rgba(35,30,10,0.08); }
+    .thumb img { width:100%; height:100px; object-fit:cover; border-radius:8px; display:block; margin-bottom:8px; }
+    .thumb .title { font-weight:700; font-size:14px; color:#2b2407; margin-bottom:6px; text-align:center;}
+    .thumb .meta-small { font-size:12px; color:var(--muted); text-align:center; }
+
+    /* selected state (if used) */
+    .thumb.selected { outline:3px solid rgba(247,201,72,0.14); box-shadow:0 14px 26px rgba(35,30,10,0.1); }
+
+    /* responsive */
+    @media (max-width:640px){
+      .thumb { width:120px; min-height:150px; }
+      .intro-video { height:220px; }
+      h1 { font-size:22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title-row">
+        <h1>Pet Adoption Centre</h1>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="lead">Adopt A Cat Now to Help You Cook!</div>
+        </div>
+      </div>
+    </header>
+
+    <div id="intro-wrap" class="intro-video" aria-hidden="false"></div>
+
+    <div id="thumbs" class="thumb-row" aria-label="Pet thumbnails">Loading…</div>
+  </div>
+
+  <script>
+    const apiBase = '/api/media';
+
+    async function fetchMedia() {
+      const res = await fetch(apiBase, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to load media: ' + res.status);
+      return res.json();
+    }
+
+    function extractYouTubeId(url) {
+      if (!url) return null;
+      try {
+        const short = url.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/);
+        if (short) return short[1];
+        const m = url.match(/(?:v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{6,})/);
+        if (m) return m[1];
+        const u = new URL(url);
+        const v = u.searchParams.get('v');
+        if (v) return v;
+        const segments = u.pathname.split('/').filter(Boolean);
+        if (segments.length) return segments[segments.length - 1];
+      } catch (e) {}
+      return null;
+    }
+
+    async function renderIntro(items) {
+      const introWrap = document.getElementById('intro-wrap');
+      introWrap.innerHTML = '';
+      const firstVideo = (items || []).find(i => i.type === 'video' && i.status === 'published');
+      if (!firstVideo) { introWrap.style.display = 'none'; return; }
+      introWrap.style.display = '';
+      const yt = extractYouTubeId(firstVideo.mediaUrl || '');
+      if (yt) {
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube.com/embed/' + yt + '?autoplay=1&mute=1&rel=0&controls=1&modestbranding=1';
+        iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; clipboard-write');
+        iframe.setAttribute('title', 'Adoption centre intro video');
+        introWrap.appendChild(iframe);
+      } else {
+        const video = document.createElement('video');
+        video.src = firstVideo.mediaUrl || '';
+        video.muted = true; video.autoplay = true; video.loop = true; video.playsInline = true; video.controls = true;
+        video.style.width = '100%';
+        introWrap.appendChild(video);
+        video.play().catch(()=>{});
+      }
+    }
+
+    async function renderThumbs(items) {
+      const wrap = document.getElementById('thumbs');
+      wrap.innerHTML = '';
+      const published = (items || []).filter(i => i.status === 'published');
+      const imageItems = published.filter(i => i.type === 'image');
+
+      if (!imageItems.length) {
+        wrap.innerHTML = '<div style="color:var(--muted)">No image thumbnails available.</div>';
+        return;
+      }
+
+      imageItems.forEach(item => {
+        const a = document.createElement('a');
+        a.className = 'thumb';
+        a.href = 'detail.html?id=' + encodeURIComponent(String(item.id));
+        a.setAttribute('aria-label', 'View ' + (item.title || 'pet'));
+
+        const img = document.createElement('img');
+        const candidate = item.thumbnailUrl || (Array.isArray(item.mediaUrls) ? item.mediaUrls[0] : item.mediaUrl) || '';
+        img.src = candidate;
+        img.alt = item.title || 'pet';
+        img.onerror = function(){ this.onerror = null; this.src = (Array.isArray(item.mediaUrls) ? item.mediaUrls[0] : item.mediaUrl) || ''; };
+
+        const ttl = document.createElement('div'); ttl.className = 'title'; ttl.textContent = item.title || '';
+        const meta = document.createElement('div'); meta.className = 'meta-small'; meta.textContent = (item.tags || []).slice(0,3).join(', ');
+
+        a.appendChild(img); a.appendChild(ttl); a.appendChild(meta);
+        wrap.appendChild(a);
+      });
+    }
+
+    (async function init(){
+      try {
+        const all = await fetchMedia();
+        await renderIntro(all);
+        await renderThumbs(all);
+      } catch (e) {
+        document.getElementById('thumbs').textContent = 'Failed to load thumbnails: ' + e.message;
+      }
+    })();
+  </script>
+</body>
+</html>

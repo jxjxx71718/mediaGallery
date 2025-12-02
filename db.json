@@ -1,0 +1,325 @@
+[
+  {
+    "id": 1,
+    "type": "image",
+    "title": "Cat",
+    "description": "Many cat photos",
+    "status": "published",
+    "tags": [
+      "cat",
+      "pet"
+    ],
+    "mediaUrls": [
+      "/static/cat_1.jpg",
+      "/static/cat_2.jpg",
+      "/static/cat_3.jpg"
+    ],
+    "thumbnailUrl": "/static/yay_cat.jpg",
+    "createdAt": "2025-12-05T10:00:00Z",
+    "updatedAt": "2025-12-02T16:55:03.696Z",
+    "mediaMeta": [
+      {
+        "name": "Mimi",
+        "age": "1 year 8 months",
+        "gender": "Female",
+        "location": "Kuala Lumpur (Setapak)",
+        "breed": "NA",
+        "neutered": "Yes",
+        "status": "Available",
+        "shortDescription": "Friendly, curious, and loves head scratches."
+      },
+      {
+        "name": "Oreo",
+        "age": "2 years 3 months",
+        "gender": "Male",
+        "location": "Petaling Jaya",
+        "breed": "NA",
+        "neutered": "Yes",
+        "status": "Available",
+        "shortDescription": "Energetic and playful — loves to chase toys."
+      },
+      {
+        "name": "Nana",
+        "age": "10 months",
+        "gender": "Female",
+        "location": "Cheras",
+        "breed": "Calico",
+        "neutered": "No",
+        "status": "Available",
+        "shortDescription": "Gentle and quiet, enjoys warm cozy spaces."
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "type": "image",
+    "title": "Dog",
+    "description": "A happy dog.",
+    "status": "published",
+    "tags": [
+      "dog",
+      "pet"
+    ],
+    "mediaUrls": [
+      "/static/dog1.jpg",
+      "/static/dog2.jpg",
+      "/static/dog3.jpg"
+    ],
+    "thumbnailUrl": "/static/dog_thumbnail.jpg",
+    "createdAt": "2025-12-05T10:05:00Z",
+    "updatedAt": "2025-12-05T10:05:00Z",
+    "mediaMeta": [
+      {
+        "name": "Rex",
+        "age": "4 years",
+        "gender": "Male",
+        "location": "Shah Alam",
+        "breed": "German Shepherd mix",
+        "neutered": "Yes",
+        "status": "Available",
+        "shortDescription": "Loyal and protective — ideal for families."
+      },
+      {
+        "name": "Bella",
+        "age": "2 years",
+        "gender": "Female",
+        "location": "Bukit Jalil",
+        "breed": "Golden Retriever",
+        "neutered": "Yes",
+        "status": "Available",
+        "shortDescription": "Very friendly with children — loves running."
+      },
+      {
+        "name": "Coco",
+        "age": "1 year 5 months",
+        "gender": "Male",
+        "location": "Subang Jaya",
+        "breed": "Poodle mix",
+        "neutered": "No",
+        "status": "Available",
+        "shortDescription": "Playful and affectionate — enjoys cuddles."
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "type": "video",
+    "title": "Intro (YouTube)",
+    "description": "Adopt a cat to cook for you",
+    "status": "published",
+    "tags": [
+      "skate",
+      "video"
+    ],
+    "mediaUrl": "https://www.youtube.com/shorts/qOg_8jPC_wU?feature=share",
+    "thumbnailUrl": "/static/cat_thumbnail.jpg",
+    "createdAt": "2025-12-05T11:00:00Z",
+    "updatedAt": "2025-12-02T12:04:01.296Z",
+    "mediaMeta": [
+      {
+        "name": "",
+        "age": "",
+        "gender": "",
+        "location": "",
+        "breed": "",
+        "neutered": "",
+        "status": "",
+        "shortDescription": ""
+      }
+    ],
+    "mediaUrls": []
+  },
+  {
+    "id": 4,
+    "type": "image",
+    "title": "Guinea Pig",
+    "description": "Adorable guinea pigfhgfhgfh",
+    "status": "published",
+    "tags": [
+      "guinea pig",
+      "pet"
+    ],
+    "mediaUrls": [
+      "/static/gp1.jpg",
+      "/static/gp2.jpg",
+      "/static/gp3.jpg",
+      "static/gp4.jpg"
+    ],
+    "thumbnailUrl": "",
+    "createdAt": "2025-12-02T10:48:55.534Z",
+    "updatedAt": "2025-12-02T12:02:26.273Z",
+    "mediaMeta": [
+      {
+        "name": "Pumpkin",
+        "age": "6 months",
+        "gender": "Female",
+        "location": "Kepong",
+        "breed": "American Guinea Pig",
+        "neutered": "No",
+        "status": "Pending",
+        "shortDescription": "Shy but warms up quickly with gentle handling."
+      },
+      {
+        "name": "Biscuit",
+        "age": "8 months",
+        "gender": "Male",
+        "location": "Seri Kembangan",
+        "breed": "Abyssinian",
+        "neutered": "No",
+        "status": "Available",
+        "shortDescription": "Very active and curious — loves to explore."
+      },
+      {
+        "name": "Marble",
+        "age": "1 year",
+        "gender": "Female",
+        "location": "Puchong",
+        "breed": "Peruvian",
+        "neutered": "Yes",
+        "status": "Available",
+        "shortDescription": "Calm and fluffy — enjoys sitting on laps."
+      },
+      {
+        "name": "Liam",
+        "age": "3 years",
+        "gender": "Male",
+        "location": "Seremban",
+        "breed": "California",
+        "neutered": "Yes",
+        "status": "Adopted",
+        "shortDescription": "Quiet and Shy"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "type": "image",
+    "title": "Fish",
+    "description": "KOI",
+    "status": "published",
+    "tags": [
+      "fish",
+      "pet"
+    ],
+    "mediaUrls": [
+      "static/fish2.jpg",
+      "static/fish1.jpg"
+    ],
+    "thumbnailUrl": "/static/fish1.jpg",
+    "mediaMeta": [
+      {
+        "name": "Bobby",
+        "age": "10 years",
+        "gender": "Male",
+        "location": "OKR",
+        "breed": "Silver Arowana",
+        "neutered": "NA",
+        "status": "Available",
+        "shortDescription": "Shinny scale"
+      },
+      {
+        "name": "Nemo",
+        "age": "2 months",
+        "gender": "Female",
+        "location": "OKR",
+        "breed": "Clownfish",
+        "neutered": "NA",
+        "status": "Available",
+        "shortDescription": "Cute, easy to keep"
+      }
+    ],
+    "createdAt": "2025-12-02T16:45:52.399Z",
+    "updatedAt": "2025-12-02T16:54:51.163Z"
+  },
+  {
+    "id": 6,
+    "type": "image",
+    "title": "Reptile",
+    "description": "Cold-blooded animal",
+    "status": "published",
+    "tags": [
+      "reptile",
+      "pet"
+    ],
+    "mediaUrls": [
+      "/static/rep1.jpg",
+      "/static/rep2.jpg",
+      "/static/rep3.jpg"
+    ],
+    "thumbnailUrl": "/static/rep4.jpg",
+    "mediaMeta": [
+      {
+        "name": "Dragon",
+        "age": "5 years",
+        "gender": "Male",
+        "location": "Alor Setar",
+        "breed": "Iguana",
+        "neutered": "NA",
+        "status": "Available",
+        "shortDescription": "Handsome boy"
+      },
+      {
+        "name": "Slowy",
+        "age": "20 years old",
+        "gender": "Female",
+        "location": "Bidor",
+        "breed": "Tortoise",
+        "neutered": "NA",
+        "status": "Available",
+        "shortDescription": "I'm coooooooooommmmmiinggggg....."
+      },
+      {
+        "name": "Yello",
+        "age": "1 year",
+        "gender": "Female",
+        "location": "TRX",
+        "breed": "Gecko",
+        "neutered": "NA",
+        "status": "Available",
+        "shortDescription": "Hi I dont bite :P"
+      }
+    ],
+    "createdAt": "2025-12-02T17:22:10.548Z",
+    "updatedAt": "2025-12-02T17:25:21.008Z"
+  },
+  {
+    "id": 7,
+    "type": "image",
+    "title": "Bird",
+    "description": "Chirp Chirp",
+    "status": "published",
+    "tags": [
+      "bird",
+      "pet"
+    ],
+    "mediaUrls": [
+      "/static/bird1.jpg",
+      "/static/bird2.jpg"
+    ],
+    "thumbnailUrl": "/static/bird3.jpg",
+    "mediaMeta": [
+      {
+        "name": "Tweety",
+        "age": "2 years",
+        "gender": "Female",
+        "location": "Seremban",
+        "breed": "Parrot",
+        "neutered": "NA",
+        "status": "Available",
+        "shortDescription": "Gentle and sweet"
+      },
+      {
+        "name": "Noot Noot",
+        "age": "2 years",
+        "gender": "Male",
+        "location": "Selangor",
+        "breed": "Parrot",
+        "neutered": "NA",
+        "status": "Adopted",
+        "shortDescription": "Talkative boy"
+      }
+    ],
+    "createdAt": "2025-12-02T17:30:32.146Z",
+    "updatedAt": "2025-12-02T17:30:43.829Z"
+  }
+]

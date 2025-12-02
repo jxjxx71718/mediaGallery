@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Pet Detail</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; padding:24px; max-width:900px; margin:0 auto;background:#fffaf0; }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .back { text-decoration:none; padding:8px 10px; border-radius:6px; border:1px solid #e6c85b; background:#fff2c2; color:#000; }
+    .preview { border:2px solid #f0e6bb; padding:12px; border-radius:8px; background:#fffaf0; }
+    .preview-media { margin-bottom:12px; }
+    .preview-media img, .preview-media iframe, .preview-media video { width:100%; height:auto; border-radius:6px; display:block; }
+    .controls { display:flex; gap:8px; margin-top:8px; }
+    .controls button { padding:8px 10px; border-radius:6px; border:1px solid #e6c85b; background:#fff2c2; cursor:pointer; }
+    .img-counter { font-size:13px; color:#666; margin-left:8px; }
+    .fixed-photo-box {
+        width: 100%;
+        max-width: 700px;
+        height: 500px;
+        border-radius: 12px;
+        border: 1px solid #f0e6bb;
+        overflow: hidden;
+        margin: 0 auto 20px auto;
+        background: #fff4c2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        }
+
+        /* IMPORTANT: Force the image/video to obey the fixed size */
+        .fixed-photo-box img,
+        .fixed-photo-box video,
+        .fixed-photo-box iframe {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block;
+        }
+        .controls button,
+        .back {
+        transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+        will-change: transform, box-shadow;
+        }
+
+        .controls button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+        background-color: #fff7e0;
+        border-color: rgba(0,0,0,0.06);
+        }
+
+        .back:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(0,0,0,0.06);
+        background-color: #fff2a8;
+        border-color: rgba(0,0,0,0.06);
+        }
+
+        .controls button:focus-visible,
+        .back:focus-visible {
+        outline: 3px solid rgba(243,215,122,0.35);
+        outline-offset: 2px;
+        border-radius: 8px;
+        }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="back" href="gallery.html">← Back to gallery</a>
+    <div id="pet-title" style="font-weight:700; font-size:28px"></div>
+  </header>
+
+  <div id="content">
+    <div id="preview" class="preview">
+      <div id="preview-media" class="preview-media">Loading…</div>
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <div id="preview-date" class="muted"></div>
+          <div id="preview-desc" style="margin-top:6px;"></div>
+        </div>
+        <div style="display:flex; align-items:center;">
+          <div class="controls">
+            <button id="prev-image">◀ Prev</button>
+            <button id="next-image">Next ▶</button>
+          </div>
+          <div id="counter" class="img-counter"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const apiBase = '/api/media';
+    let currentItem = null;
+    let currentImgIndex = 0;
+
+    async function fetchMedia() {
+      const res = await fetch(apiBase, { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to load media: ' + res.status);
+      return res.json();
+    }
+
+    function extractYouTubeId(url) {
+      if (!url) return null;
+      try {
+        const short = url.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/);
+        if (short) return short[1];
+        const m = url.match(/(?:v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{6,})/);
+        if (m) return m[1];
+        const u = new URL(url);
+        const v = u.searchParams.get('v');
+        if (v) return v;
+        const segments = u.pathname.split('/').filter(Boolean);
+        if (segments.length) return segments[segments.length - 1];
+      } catch (e) {}
+      return null;
+    }
+
+    function parseIndex(v, fallback=0) {
+      const n = parseInt(v,10);
+      return Number.isFinite(n) && n >= 0 ? n : fallback;
+    }
+
+    // format per-image metadata into your template
+    // meta: object (may be undefined/null)
+    // item: fallback parent item (if you want to fallback to item.description)
+    function renderProfileFromMeta(meta, item) {
+  const fields = {
+    name: meta?.name || item.title || '',
+    age: meta?.age || '—',
+    gender: meta?.gender || '—',
+    location: meta?.location || item.location || '—',
+    breed: meta?.breed || item.breed || '—',
+    neutered: (meta && meta.neutered !== undefined) ? meta.neutered : (item.neutered || '—'),
+    status: meta?.status || item.status || '—',
+    shortDescription: meta?.shortDescription || item.description || ''
+  };
+
+  return `
+  <div style="max-width:700px; margin:20px auto;">
+
+    <h2 style="
+      font-size:22px;
+      margin:0 0 12px 0;
+      border-left:4px solid #2b6cb0;
+      padding-left:8px;
+      color:#2b6cb0;
+    ">Pet Information</h2>
+
+    <div style="
+      background:#ffe9a8;
+      border:1px solid #ecdba5;
+      border-radius:10px;
+      padding:16px;
+    ">
+
+      <div style="
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:12px;
+        font-size:15px;
+      ">
+
+        <div>
+          <div style="font-size:18px; font-weight:700; color:#333;">Name</div>
+          <div style="font-size:16px; padding-top:6px;">${escapeHtml(fields.name)}</div>
+        </div>
+
+        <div>
+          <div style="font-size:18px; font-weight:700; color:#333;">Age</div>
+          <div style="font-size:16px; padding-top:6px;">${escapeHtml(fields.age)}</div>
+        </div>
+
+        <div>
+          <div style="font-size:18px; font-weight:700; color:#333;">Gender</div>
+          <div style="font-size:16px; padding-top:6px;">${escapeHtml(fields.gender)}</div>
+        </div>
+
+        <div>
+          <div style="font-size:18px; font-weight:700; color:#333;">Location</div>
+          <div style="font-size:16px; padding-top:6px;">${escapeHtml(fields.location)}</div>
+        </div>
+
+        <div>
+          <div style="font-size:18px; font-weight:700; color:#333;">Breed</div>
+          <div style="font-size:16px; padding-top:6px;">${escapeHtml(fields.breed)}</div>
+        </div>
+
+        <div>
+          <div style="font-size:18px; font-weight:700; color:#333;">Neutered</div>
+          <div style="font-size:16px; padding-top:6px;">${escapeHtml(fields.neutered)}</div>
+        </div>
+
+        <div style="grid-column:1 / -1; margin-top:4px;">
+          <div style="font-size:18px; font-weight:700; color:#333;">Status</div>
+          <div style="font-size:16px; padding-top:6px;">${escapeHtml(fields.status)}</div>
+        </div>
+
+      </div>
+
+      <!-- Short Description -->
+      <div style="margin-top:18px;">
+        <div style="font-size:18px; font-weight:700; color:#333;">Short Description</div>
+        <div style="
+          margin-top:6px;
+          font-size:16px;
+          line-height:1.5;
+          color:#333;
+          background:#fff7e0;
+          padding:12px;
+          border-radius:8px;
+          border:1px solid #eee;
+        ">${escapeHtml(fields.shortDescription)}</div>
+      </div>
+
+    </div>
+
+  </div>
+  `;
+}
+
+    // small html escaper used above
+    function escapeHtml(s) {
+    if (s === undefined || s === null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderPreviewFor(item, idx = 0, pushState = true) {
+        const mediaWrapper = document.getElementById('preview-media');
+        mediaWrapper.innerHTML = '';
+        if (!item) return;
+
+        // media list for this item
+        const mediaList = Array.isArray(item.mediaUrls) && item.mediaUrls.length ? item.mediaUrls.slice() : (item.mediaUrl ? [item.mediaUrl] : []);
+        let cur = parseIndex(idx, 0);
+        if (mediaList.length) cur = ((cur % mediaList.length) + mediaList.length) % mediaList.length;
+        else cur = 0;
+
+        // set header meta
+        document.getElementById('pet-title').textContent = item.title || '';
+        document.getElementById('preview-date').textContent = item.updatedAt ? new Date(item.updatedAt).toLocaleString() : '';
+
+        // prepare per-image metadata (mediaMeta expected to be an array of objects aligned to mediaUrls)
+        const metaArray = Array.isArray(item.mediaMeta) ? item.mediaMeta : [];
+        const perImageMeta = metaArray[cur] || null;
+
+        // render media inside fixed box (images) or iframe/video
+        if (item.type === 'image') {
+            const img = document.createElement('img');
+            img.src = mediaList.length ? mediaList[cur] : (item.thumbnailUrl || '');
+            img.alt = (perImageMeta && (perImageMeta.name || '')) || item.title || '';
+            img.onerror = function(){ this.onerror = null; this.src = item.mediaUrl || ''; };
+
+            const box = document.createElement('div');
+            box.className = 'fixed-photo-box';
+            box.appendChild(img);
+            mediaWrapper.appendChild(box);
+        } else if (item.type === 'video') {
+            const yt = extractYouTubeId(item.mediaUrl || '');
+            if (yt) {
+            const iframe = document.createElement('iframe');
+            iframe.src = 'https://www.youtube.com/embed/' + yt + '?rel=0&controls=1&modestbranding=1';
+            iframe.setAttribute('allow','accelerometer; encrypted-media; picture-in-picture; clipboard-write');
+            iframe.style.width = '100%'; iframe.style.height = '480px';
+            // wrap video in the fixed box too so layout stays consistent
+            const box = document.createElement('div');
+            box.className = 'fixed-photo-box';
+            box.appendChild(iframe);
+            mediaWrapper.appendChild(box);
+            } else {
+            const v = document.createElement('video');
+            v.src = item.mediaUrl || '';
+            v.controls = true;
+            v.style.width = '100%';
+            const box = document.createElement('div');
+            box.className = 'fixed-photo-box';
+            box.appendChild(v);
+            mediaWrapper.appendChild(box);
+            }
+        }
+
+        // show the profile area (structured template)
+        const profileHtml = renderProfileFromMeta(perImageMeta, item);
+        // use a container for the profile so you can style it later
+        const profileContainer = document.createElement('div');
+        profileContainer.style.marginTop = '12px';
+        profileContainer.innerHTML = profileHtml;
+        mediaWrapper.appendChild(profileContainer);
+
+        // update counter and prev/next enable
+        const len = mediaList.length || 0;
+        document.getElementById('counter').textContent = len ? ((cur + 1) + ' / ' + len) : '';
+        document.getElementById('prev-image').disabled = (len <= 1);
+        document.getElementById('next-image').disabled = (len <= 1);
+
+        // push URL state if requested
+        if (pushState) {
+            const newUrl = location.pathname + '?id=' + encodeURIComponent(String(item.id)) + (item.type === 'image' ? ('&img=' + encodeURIComponent(String(cur))) : '');
+            try { history.pushState({ id: item.id, img: cur }, '', newUrl); } catch(e){}
+        }
+
+        currentItem = item;
+        currentImgIndex = cur;
+        }
+
+
+    async function selectAndRenderFromUrl(push=false) {
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      const img = params.get('img');
+      if (!id) {
+        document.getElementById('preview-media').textContent = 'No item selected.';
+        return;
+      }
+      const all = await fetchMedia();
+      const item = all.find(x => String(x.id) === String(id));
+      if (!item) { document.getElementById('preview-media').textContent = 'Item not found.'; return; }
+      renderPreviewFor(item, img !== null ? parseIndex(img,0) : 0, push);
+    }
+
+    document.getElementById('prev-image').addEventListener('click', async () => {
+      if (!currentItem) return;
+      const mediaList = Array.isArray(currentItem.mediaUrls) && currentItem.mediaUrls.length ? currentItem.mediaUrls : (currentItem.mediaUrl ? [currentItem.mediaUrl] : []);
+      if (!mediaList.length) return;
+      currentImgIndex = (currentImgIndex - 1 + mediaList.length) % mediaList.length;
+      renderPreviewFor(currentItem, currentImgIndex, true);
+    });
+    document.getElementById('next-image').addEventListener('click', async () => {
+      if (!currentItem) return;
+      const mediaList = Array.isArray(currentItem.mediaUrls) && currentItem.mediaUrls.length ? currentItem.mediaUrls : (currentItem.mediaUrl ? [currentItem.mediaUrl] : []);
+      if (!mediaList.length) return;
+      currentImgIndex = (currentImgIndex + 1) % mediaList.length;
+      renderPreviewFor(currentItem, currentImgIndex, true);
+    });
+
+    // keyboard: left/right navigate between items by id param in gallery list; up/down scroll images
+    window.addEventListener('keydown', async (ev) => {
+      if (ev.altKey||ev.ctrlKey||ev.metaKey||ev.shiftKey) return;
+      const key = ev.key;
+      if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(key)) return;
+      const all = await fetchMedia();
+      const pub = all.filter(i => i.status === 'published');
+      if (!currentItem) {
+        // pick first published
+        if (pub.length) { renderPreviewFor(pub[0],0,true); }
+        return;
+      }
+      const idx = pub.findIndex(x => String(x.id) === String(currentItem.id));
+      if (key === 'ArrowLeft' || key === 'ArrowRight') {
+        if (idx < 0) return;
+        const nextIdx = (key === 'ArrowRight') ? (idx + 1) % pub.length : (idx - 1 + pub.length) % pub.length;
+        renderPreviewFor(pub[nextIdx], 0, true);
+        return;
+      }
+      // up/down change image if image-type
+      if (currentItem.type !== 'image') return;
+      const mediaList = Array.isArray(currentItem.mediaUrls) && currentItem.mediaUrls.length ? currentItem.mediaUrls : (currentItem.mediaUrl ? [currentItem.mediaUrl] : []);
+      if (!mediaList.length) return;
+      currentImgIndex = (key === 'ArrowDown') ? ((currentImgIndex + 1) % mediaList.length) : ((currentImgIndex - 1 + mediaList.length) % mediaList.length);
+      renderPreviewFor(currentItem, currentImgIndex, true);
+    });
+
+    // initialize: load based on url (expects ?id=...)
+    (async function(){
+      try {
+        await selectAndRenderFromUrl(false);
+      } catch (e) {
+        document.getElementById('preview-media').textContent = 'Failed to load: ' + e.message;
+      }
+    })();
+
+    // handle back/forward
+    window.addEventListener('popstate', () => {
+      selectAndRenderFromUrl(false);
+    });
+  </script>
+</body>
+</html>

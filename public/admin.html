@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Media Admin (with simple admin auth)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding:20px; max-width:1100px; margin:auto; background:#faf9f7; color:#222; }
+    h1 { margin-bottom: 12px; }
+    table { width:100%; border-collapse: collapse; margin-bottom: 16px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align:left; vertical-align: top; }
+    th { background: #f7f7f7; }
+    .actions button { margin-right:6px; }
+    form { border:1px solid #eee; padding:12px; border-radius:6px; background:#fff; }
+    label { display:block; margin-top:8px; font-weight:600; }
+    input[type="text"], textarea, select, input[type="password"] { width:100%; padding:8px; margin-top:4px; box-sizing:border-box; }
+    .small { width:50%; display:inline-block; }
+    .row { display:flex; gap:12px; }
+    .muted { color:#666; font-size:13px; }
+    .top-actions { display:flex; gap:8px; margin-bottom:12px; align-items:center; }
+    a.button { background:#2b6cb0; color:#fff; padding:8px 10px; border-radius:6px; text-decoration:none; font-size: 12px; }
+    button.primary { background:#2b6cb0; color:#fff; border:none; padding:8px 10px; border-radius:6px; cursor:pointer;font-size: 12px; }
+    button.danger { background:#c53030; color:#fff; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; }
+    pre { background:#111; color:#eee; padding:8px; border-radius:6px; overflow:auto; max-height:120px; }
+
+    tr.draft-row { background: rgba(216, 209, 209, 0.5); color: #534f4f; }
+    tbody tr:hover { background: rgba(0,0,0,0.02); }
+
+    .meta-block { border:1px solid #e1e1e1; padding:10px; border-radius:6px; background:#fafafa; margin-bottom:12px; }
+    .meta-grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+
+    .login-overlay {
+      position:fixed; inset:0; background: rgba(10,10,10,0.45);
+      display:flex; align-items:center; justify-content:center; z-index:9999;
+    }
+    .login-card { width:360px; background:#fff; padding:18px; border-radius:10px; }
+
+    .content-locked {
+      filter: blur(0.4px) grayscale(0.02);
+      pointer-events: none;
+      user-select: none;
+      opacity: 0.95;
+    }
+
+    .title-bar {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom: 18px;
+        }
+
+        #btn-logout {
+        margin:0;
+        background:#efefef;
+        color:#222;
+        border:1px solid #ddd;
+        padding:8px 12px;
+        border-radius:6px;
+        cursor:pointer;
+        transition: background 0.15s ease;
+        }
+
+        #btn-logout:hover {
+        background:#e2e2e2;
+        }
+
+
+    @media (max-width:720px){ .login-card { width:92%; } }
+  </style>
+</head>
+<body>
+
+  <div id="flash" aria-live="polite" style="position:fixed;top:18px;right:18px;z-index:10000;"></div>
+
+  <!-- LOGIN OVERLAY -->
+  <div id="loginOverlay" class="login-overlay" aria-hidden="true" style="display:none;">
+    <div class="login-card">
+      <h2 id="loginTitle">Admin sign in</h2>
+      <label>Username</label>
+      <input id="loginUser" type="text" />
+      <label>Password</label>
+      <input id="loginPass" type="password" />
+      <div class="login-actions">
+        <button id="loginBtn" style="background:#2b6cb0;color:#fff;">Sign in</button>
+        <button id="loginCancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="title-bar">
+    <h1>Media Admin</h1>
+    <button id="btn-logout">Logout</button>
+  </div>
+  
+  <div class="top-actions" id="topActions">
+    <a class="button" href="/gallery.html" target="_blank">Open Public Gallery</a>
+    <button id="btn-new" class="primary">Create New Item</button>
+    <button id="btn-refresh" class="primary">Refresh</button>
+
+        <!-- Filters -->
+        <div id="admin-filters" style="margin-left:auto; display:flex; gap:8px; align-items:center;">
+            <label style="font-weight:600; font-size:13px;">
+              Status
+              <select id="filter-status" style="margin-left:6px;">
+                <option value="">All</option>
+                <option value="published">Published</option>
+                <option value="draft">Draft</option>
+              </select>
+            </label>
+      
+            <label style="font-weight:600; font-size:13px;">
+              Type
+              <select id="filter-type" style="margin-left:6px;">
+                <option value="">All</option>
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+              </select>
+            </label>
+      
+            <label style="font-weight:600; font-size:13px;">
+              Tag
+              <input id="filter-tag" type="text" placeholder="tag (optional)" style="margin-left:6px; padding:6px 5px;" />
+            </label>
+      
+            <button id="btn-clear-filters" style="padding:6px 8px; margin-left: 5px;margin-bottom: -30px;background-color:rgb(188, 231, 200); border-radius:6px; border:1px solid #ddd;">Clear</button>
+          </div>
+      
+        </div>
+      
+        <div id="list-wrap">Loading…</div>
+      
+        <h2 id="form-title">Edit / Create Item</h2>
+        <form id="edit-form">
+          <input type="hidden" id="field-id" value="" />
+          <label>Title
+            <input id="field-title" type="text" />
+          </label>
+      
+          <label>Type
+            <select id="field-type">
+              <option value="image">image</option>
+              <option value="video">video</option>
+            </select>
+          </label>
+      
+          <label>Description
+            <textarea id="field-description" rows="3"></textarea>
+          </label>
+      
+          <label>Status
+            <select id="field-status">
+              <option value="draft">draft</option>
+              <option value="published">published</option>
+            </select>
+          </label>
+      
+          <label>Tags (comma-separated)
+            <input id="field-tags" type="text" />
+          </label>
+      
+          <label>Media URLs (comma-separated) — for images: multiple files, for video usually one URL
+            <input id="field-mediaUrls" type="text" placeholder="/static/cat_1.jpg, /static/cat_2.jpg" />
+          </label>
+      
+          <label>Single mediaUrl (optional, used if mediaUrls empty)
+            <input id="field-mediaUrl" type="text" placeholder="/static/dog.jpg or https://..." />
+          </label>
+      
+          <label>Thumbnail URL (optional)
+            <input id="field-thumbnail" type="text" placeholder="/static/cat_thumb.jpg or https://..." />
+          </label>
+      
+          <div style="margin-top:12px;">
+            <button type="submit" class="primary" id="btn-save">Save</button>
+            <button type="button" id="btn-cancel">Cancel</button>
+            <button type="button" id="btn-delete" class="danger" style="float:right">Delete</button>
+          </div>
+      
+          <div style="margin-top:12px;" class="muted">
+            <div>Created/Updated timestamps are set automatically.</div>
+          </div>
+      
+          <h3 style="margin-top:20px;">Per-Image Metadata</h3>
+          <div id="meta-container" style="border:1px solid #ddd; padding:12px; border-radius:8px; background:#fff;">
+            <div style="color:#666; font-size:14px; margin-bottom:8px;">
+              Metadata will auto-sync with number of Media URLs (index-based).
+            </div>
+            <div id="meta-list"></div>
+            <div class="note">Tip: reorder media URLs carefully — metadata is tied to the index of each URL.</div>
+          </div>
+      
+        </form>
+      
+        <script>
+          /**************************************************************************
+           * SIMPLE CLIENT-SIDE AUTH & UTILITIES
+           **************************************************************************/
+          const AUTH_CONFIG = {
+            username: 'admin',
+            password: '0000',
+            storageKey: 'media_admin_auth_v1'
+          };
+      
+          function showFlash(message, type='info', timeout=3500) {
+            const container = document.getElementById('flash');
+            if (!container) return alert(message);
+            const el = document.createElement('div');
+            el.textContent = message;
+            el.style.padding = '10px 12px';
+            el.style.marginTop = '8px';
+            el.style.borderRadius = '8px';
+            el.style.boxShadow = '0 6px 18px rgba(0,0,0,0.08)';
+            if (type === 'error') {
+              el.style.background = '#ffeceb'; el.style.color = '#6b1e1e'; el.style.border = '1px solid #f5c2c2';
+            } else if (type === 'success') {
+              el.style.background = '#e6ffea'; el.style.color = '#1b6e2b'; el.style.border = '1px solid #b7f0c6';
+            } else {
+              el.style.background = '#fff9e6'; el.style.color = '#5a4a0f'; el.style.border = '1px solid #f0e4b5';
+            }
+            container.appendChild(el);
+            setTimeout(() => el.style.opacity = '0.0', timeout - 300);
+            setTimeout(() => el.remove(), timeout);
+          }
+      
+          function isAuthenticated() {
+            try { return localStorage.getItem(AUTH_CONFIG.storageKey) === '1'; } catch(e){ return false; }
+          }
+          function setAuthenticated(val) {
+            try { if (val) localStorage.setItem(AUTH_CONFIG.storageKey, '1'); else localStorage.removeItem(AUTH_CONFIG.storageKey); } catch(e){}
+          }
+      
+          function showLoginOverlay(show=true) {
+            const overlay = document.getElementById('loginOverlay');
+            const logoutBtn = document.getElementById('btn-logout');
+            const lockTargets = [
+              document.getElementById('topActions'),
+              document.getElementById('list-wrap'),
+              document.getElementById('edit-form')
+            ].filter(Boolean);
+      
+            if (show) {
+              overlay.style.display = 'flex';
+              overlay.setAttribute('aria-hidden','false');
+              lockTargets.forEach(el => el.classList.add('content-locked'));
+              logoutBtn.style.display = 'none';
+            } else {
+              overlay.style.display = 'none';
+              overlay.setAttribute('aria-hidden','true');
+              lockTargets.forEach(el => el.classList.remove('content-locked'));
+              logoutBtn.style.display = '';
+            }
+          }
+      
+          document.getElementById('loginBtn').addEventListener('click', doLogin);
+          document.getElementById('loginPass').addEventListener('keypress', (e) => { if (e.key === 'Enter') doLogin(); });
+          document.getElementById('loginCancel').addEventListener('click', () => { alert('Sign in required to access admin features.'); });
+      
+          document.getElementById('btn-logout').addEventListener('click', () => {
+            if (!confirm('Log out?')) return;
+            setAuthenticated(false);
+            location.reload();
+          });
+          const apiBase = '/api/media';
+
+          function doLogin() {
+            const user = (document.getElementById('loginUser') || {}).value || '';
+            const pass = (document.getElementById('loginPass') || {}).value || '';
+            if (user === AUTH_CONFIG.username && pass === AUTH_CONFIG.password) {
+              setAuthenticated(true);
+              showLoginOverlay(false);
+              initAfterAuth();
+            } else {
+              alert('Invalid credentials');
+            }
+          }
+      
+          // initial auth check
+          if (!isAuthenticated()) {
+            showLoginOverlay(true);
+          } else {
+            showLoginOverlay(false);
+            initAfterAuth();
+          }
+      
+          /**************************************************************************
+           * MAIN ADMIN CODE
+           **************************************************************************/
+      
+          function escapeHtml(s) {
+            if (s === undefined || s === null) return '';
+            return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+          }
+          function escapeAttr(s) { return escapeHtml(s); }
+          function formatDate(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            if (isNaN(d)) return ts;
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const hh = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+          }
+      
+          async function fetchAll() {
+            const r = await fetch(apiBase, { cache: 'no-store' });
+            if (!r.ok) throw new Error('Failed to fetch media: ' + r.status);
+            return r.json();
+          }
+      
+          async function renderList() {
+            if (!isAuthenticated()) { showLoginOverlay(true); return; }
+            const data = await fetchAll();
+            const wrap = document.getElementById('list-wrap');
+            if (!Array.isArray(data) || data.length === 0) {
+              wrap.innerHTML = '<p>No items yet.</p>';
+              return;
+            }
+      
+            const { status, type, tag } = getFiltersFromUI();
+            let filtered = data.slice();
+            if (status) filtered = filtered.filter(item => String(item.status || '').toLowerCase() === status.toLowerCase());
+            if (type) filtered = filtered.filter(item => String(item.type || '').toLowerCase() === type.toLowerCase());
+            if (tag) {
+              filtered = filtered.filter(item => {
+                const tags = Array.isArray(item.tags) ? item.tags.map(t => String(t).toLowerCase()) : [];
+                return tags.some(t => t.includes(tag));
+              });
+            }
+      
+            let html = '<table><thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Status</th><th>Thumb</th><th>Tags</th><th>Updated</th><th>Actions</th></tr></thead><tbody>';
+            filtered.forEach(item => {
+              const thumb = item.thumbnailUrl || (Array.isArray(item.mediaUrls) ? (item.mediaUrls[0] || '') : (item.mediaUrl || ''));
+              const trClass = (String(item.status || '').toLowerCase() === 'draft') ? ' class="draft-row"' : '';
+              html += '<tr' + trClass + '>';
+              html += '<td>' + escapeHtml(String(item.id)) + '</td>';
+              html += '<td>' + escapeHtml(item.title || '') + '</td>';
+              html += '<td>' + escapeHtml(item.type || '') + '</td>';
+              html += '<td>' + escapeHtml(item.status || '') + '</td>';
+              html += '<td><img src="' + escapeAttr(thumb) + '" alt="" style="width:80px;height:50px;object-fit:cover;" onerror="this.src=\'\'"/></td>';
+              html += '<td>' + escapeHtml((item.tags || []).join(', ')) + '</td>';
+              html += '<td>' + escapeHtml(formatDate(item.updatedAt || '')) + '</td>';
+              html += '<td class="actions">';
+              html += `<button onclick="onEdit(${encodeURIComponent(item.id)})">Edit</button>`;
+              html += `<button onclick="onDeleteConfirm(${encodeURIComponent(item.id)})">Delete</button>`;
+              html += '</td></tr>';
+            });
+            html += '</tbody></table>';
+            wrap.innerHTML = html;
+          }
+      
+          async function onEdit(id) {
+            try {
+              const data = await fetchAll();
+              const item = (Array.isArray(data) ? data : []).find(m => String(m.id) === String(id));
+              if (!item) { alert('Item not found (id: ' + id + ')'); return; }
+      
+              document.getElementById('field-id').value = item.id || '';
+              document.getElementById('field-title').value = item.title || '';
+              document.getElementById('field-type').value = item.type || 'image';
+              document.getElementById('field-description').value = item.description || '';
+              document.getElementById('field-status').value = item.status || 'draft';
+              document.getElementById('field-tags').value = (item.tags || []).join(', ');
+              document.getElementById('field-mediaUrls').value =
+                Array.isArray(item.mediaUrls) && item.mediaUrls.length ? item.mediaUrls.join(', ') : '';
+              document.getElementById('field-mediaUrl').value = item.mediaUrl || '';
+              document.getElementById('field-thumbnail').value = item.thumbnailUrl || '';
+              document.getElementById('form-title').textContent = 'Edit Item ' + item.id;
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+              const urls = Array.isArray(item.mediaUrls) ? item.mediaUrls : (item.mediaUrl ? [item.mediaUrl] : []);
+              renderMetaBlocks(urls, Array.isArray(item.mediaMeta) ? item.mediaMeta : []);
+            } catch (err) {
+              console.error('onEdit error', err);
+              alert('Failed to fetch item');
+            }
+          }
+      
+          function onNew() {
+            document.getElementById('field-id').value = '';
+            document.getElementById('field-title').value = '';
+            document.getElementById('field-type').value = 'image';
+            document.getElementById('field-description').value = '';
+            document.getElementById('field-status').value = 'draft';
+            document.getElementById('field-tags').value = '';
+            document.getElementById('field-mediaUrls').value = '';
+            document.getElementById('field-mediaUrl').value = '';
+            document.getElementById('field-thumbnail').value = '';
+            document.getElementById('form-title').textContent = 'Create New Item';
+            renderMetaBlocks([], []);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+      
+          function renderMetaBlocks(mediaUrls, existingMeta) {
+            const container = document.getElementById('meta-list');
+            container.innerHTML = '';
+            (mediaUrls || []).forEach((url, i) => {
+              const meta = existingMeta?.[i] || {
+                name: "", age: "", gender: "", location: "", breed: "", neutered: "", status: "", shortDescription: ""
+              };
+      
+              const block = document.createElement('div');
+              block.className = 'meta-block';
+              block.innerHTML = `
+                <div style="font-weight:700; margin-bottom:6px;">Media ${i+1}</div>
+                <div class="meta-grid">
+                  <label>Name <input type="text" data-meta-field="name" data-meta-index="${i}" value="${escapeHtml(meta.name)}"></label>
+                  <label>Age <input type="text" data-meta-field="age" data-meta-index="${i}" value="${escapeHtml(meta.age)}"></label>
+                  <label>Gender <input type="text" data-meta-field="gender" data-meta-index="${i}" value="${escapeHtml(meta.gender)}"></label>
+                  <label>Location <input type="text" data-meta-field="location" data-meta-index="${i}" value="${escapeHtml(meta.location)}"></label>
+                  <label>Breed <input type="text" data-meta-field="breed" data-meta-index="${i}" value="${escapeHtml(meta.breed)}"></label>
+                  <label>Neutered <input type="text" data-meta-field="neutered" data-meta-index="${i}" value="${escapeHtml(meta.neutered)}"></label>
+                  <label>Status <input type="text" data-meta-field="status" data-meta-index="${i}" value="${escapeHtml(meta.status)}"></label>
+                </div>
+                <label style="margin-top:8px;">
+                  Short Description
+                  <textarea rows="2" data-meta-field="shortDescription" data-meta-index="${i}">${escapeHtml(meta.shortDescription)}</textarea>
+                </label>
+              `;
+              container.appendChild(block);
+            });
+          }
+      
+          function collectMetaFromUI() {
+            const inputs = document.querySelectorAll('[data-meta-field]');
+            const meta = {};
+            inputs.forEach(el => {
+              const idx = Number(el.dataset.metaIndex);
+              const field = el.dataset.metaField;
+              if (!meta[idx]) meta[idx] = {};
+              meta[idx][field] = el.value;
+            });
+            const arr = Object.keys(meta).map(k => ({ index: Number(k), data: meta[k] }))
+              .sort((a,b) => a.index - b.index)
+              .map(x => x.data);
+            return arr;
+          }
+      
+          document.getElementById('edit-form').addEventListener('submit', onSave);
+          document.getElementById('btn-new').addEventListener('click', onNew);
+          document.getElementById('btn-cancel').addEventListener('click', (e) => { e.preventDefault(); onNew(); });
+          document.getElementById('btn-delete').addEventListener('click', (e) => { e.preventDefault(); const id = document.getElementById('field-id').value; if (id) onDeleteConfirm(id); else alert('No item selected'); });
+      
+          async function onSave(e) {
+            e.preventDefault();
+            if (!isAuthenticated()) { alert('Sign in required'); showLoginOverlay(true); return; }
+      
+            const id = document.getElementById('field-id').value;
+            const payload = {
+              title: document.getElementById('field-title').value.trim(),
+              type: document.getElementById('field-type').value,
+              description: document.getElementById('field-description').value,
+              status: document.getElementById('field-status').value,
+              tags: document.getElementById('field-tags').value.split(',').map(s => s.trim()).filter(Boolean),
+            };
+      
+            const mediaUrlsRaw = document.getElementById('field-mediaUrls').value;
+            let urls = [];
+            if (mediaUrlsRaw && mediaUrlsRaw.trim()) {
+              urls = mediaUrlsRaw.split(',').map(s => s.trim()).filter(Boolean);
+              payload.mediaUrls = urls;
+            } else {
+              const singleMedia = document.getElementById('field-mediaUrl').value.trim();
+              if (singleMedia) { urls = [singleMedia]; payload.mediaUrl = singleMedia; }
+            }
+      
+            const thumb = document.getElementById('field-thumbnail').value.trim();
+            if (thumb) payload.thumbnailUrl = thumb;
+      
+            const existingMeta = collectMetaFromUI();
+            if (urls.length) {
+              const preserved = urls.map((u, i) => (existingMeta[i] || {}));
+              renderMetaBlocks(urls, preserved);
+            } else {
+              renderMetaBlocks([], []);
+            }
+      
+            payload.mediaMeta = collectMetaFromUI();
+      
+            if (Array.isArray(payload.mediaMeta) && payload.mediaUrls && payload.mediaMeta.length !== payload.mediaUrls.length) {
+              if (!confirm('Warning: number of metadata blocks (' + payload.mediaMeta.length + ') does not match number of media URLs (' + payload.mediaUrls.length + '). Continue saving?')) {
+                return;
+              }
+            }
+      
+            try {
+              let r;
+              if (id) {
+                r = await fetch(apiBase + '/' + encodeURIComponent(id), {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+                });
+              } else {
+                r = await fetch(apiBase, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+                });
+              }
+      
+              const txt = await r.text();
+              let body;
+              try { body = txt ? JSON.parse(txt) : null; } catch(e) { body = txt; }
+      
+              if (!r.ok) {
+                const errMsg = body && body.error ? body.error : (typeof body === 'string' ? body : JSON.stringify(body));
+                alert((id ? 'Update' : 'Create') + ' failed: ' + r.status + ' — ' + errMsg);
+                return;
+              }
+      
+              alert(id ? 'Updated' : 'Created');
+              await softReset(); // use soft reset to refresh list and form state to fresh
+              if (body && body.id) {
+                await onEdit(body.id);
+              } else {
+                onNew();
+              }
+            } catch (err) {
+              console.error('onSave exception', err);
+              alert('Save failed: ' + err.message);
+            }
+          }
+      
+          async function onDeleteConfirm(id) {
+            if (!isAuthenticated()) { alert('Sign in required'); showLoginOverlay(true); return; }
+            if (!confirm('Delete item ' + id + '? This action cannot be undone.')) return;
+            try {
+              const r = await fetch(apiBase + '/' + encodeURIComponent(id), { method: 'DELETE' });
+              if (!r.ok) throw new Error('Delete failed: ' + r.status);
+              alert('Deleted');
+              await softReset();
+              onNew();
+            } catch (err) {
+              alert('Delete failed: ' + err.message);
+            }
+          }
+      
+          document.getElementById('field-mediaUrls').addEventListener('input', () => {
+            const urls = document.getElementById('field-mediaUrls').value
+              .split(',')
+              .map(s => s.trim())
+              .filter(Boolean);
+            renderMetaBlocks(urls, []);
+          });
+      
+          async function refreshAll() {
+            try { await renderList(); } catch (e) { document.getElementById('list-wrap').innerHTML = '<div class="error">Failed to load list: ' + e.message + '</div>'; }
+          }
+      
+          function getFiltersFromUI() {
+            const status = (document.getElementById('filter-status') || {}).value || '';
+            const type = (document.getElementById('filter-type') || {}).value || '';
+            const tagRaw = (document.getElementById('filter-tag') || {}).value || '';
+            const tag = tagRaw.trim().toLowerCase();
+            return { status, type, tag };
+          }
+      
+          function wireFilterEvents() {
+            const statusEl = document.getElementById('filter-status');
+            const typeEl = document.getElementById('filter-type');
+            const tagEl = document.getElementById('filter-tag');
+            const clearBtn = document.getElementById('btn-clear-filters');
+      
+            if (statusEl) statusEl.addEventListener('change', renderList);
+            if (typeEl) typeEl.addEventListener('change', renderList);
+            if (tagEl) tagEl.addEventListener('input', () => {
+              clearTimeout(window._filterDebounce);
+              window._filterDebounce = setTimeout(renderList, 150);
+            });
+            if (clearBtn) clearBtn.addEventListener('click', () => {
+              if (statusEl) statusEl.value = '';
+              if (typeEl) typeEl.value = '';
+              if (tagEl) tagEl.value = '';
+              renderList();
+            });
+          }
+      
+          // ---------- SOFT RESET (resets UI to default state without full page reload) ----------
+          async function softReset() {
+            // clear filters UI
+            const statusEl = document.getElementById('filter-status');
+            const typeEl = document.getElementById('filter-type');
+            const tagEl = document.getElementById('filter-tag');
+            if (statusEl) statusEl.value = '';
+            if (typeEl) typeEl.value = '';
+            if (tagEl) tagEl.value = '';
+      
+            // reset form to new state
+            onNew();
+      
+            // refresh list
+            try {
+              await renderList();
+            } catch (err) {
+              document.getElementById('list-wrap').innerHTML = '<div class="error">Failed to load list: ' + err.message + '</div>';
+            }
+      
+            // scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showFlash('UI reset to fresh state', 'success', 1400);
+          }
+      
+          // Replace old refresh handler with soft reset behavior
+          (function bindSoftRefresh(){
+            const old = document.getElementById('btn-refresh');
+            const parent = old.parentNode;
+            // replace the node to remove any previously attached listeners
+            const fresh = old.cloneNode(true);
+            parent.replaceChild(fresh, old);
+            fresh.addEventListener('click', (e) => {
+              e.preventDefault();
+              softReset();
+            });
+          })();
+      
+          function initAfterAuth(){
+            wireFilterEvents();
+            document.getElementById('btn-new').addEventListener('click', onNew);
+            document.getElementById('edit-form').addEventListener('submit', onSave);
+            document.getElementById('btn-cancel').addEventListener('click', (e) => { e.preventDefault(); onNew(); });
+            document.getElementById('btn-delete').addEventListener('click', (e) => { e.preventDefault(); const id = document.getElementById('field-id').value; if (id) onDeleteConfirm(id); else alert('No item selected'); });
+      
+            refreshAll();
+            document.getElementById('btn-logout').style.display = '';
+          }
+      
+          // expose for inline handlers
+          window.onEdit = onEdit;
+          window.onDeleteConfirm = onDeleteConfirm;
+          window.onNew = onNew;
+      
+          // initial setup if authed
+          if (isAuthenticated()) {
+            // initAfterAuth already called earlier, but ensure filters wired if needed
+            wireFilterEvents();
+          }
+        </script>
+      </body>
+      </html>
+      
