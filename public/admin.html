@@ -496,14 +496,19 @@
                 document.getElementById('field-description').value = item.description || '';
                 document.getElementById('field-status').value = item.status || 'draft';
                 document.getElementById('field-tags').value = (item.tags || []).join(', ');
+                // show mediaUrls only if non-empty array, otherwise leave blank
                 document.getElementById('field-mediaUrls').value =
-                    Array.isArray(item.mediaUrls) && item.mediaUrls.length ? item.mediaUrls.join(', ') : '';
+                    (Array.isArray(item.mediaUrls) && item.mediaUrls.length) ? item.mediaUrls.join(', ') : '';
                 document.getElementById('field-mediaUrl').value = item.mediaUrl || '';
                 document.getElementById('field-thumbnail').value = item.thumbnailUrl || '';
                 document.getElementById('form-title').textContent = 'Edit Item ' + item.id;
                 window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                const urls = Array.isArray(item.mediaUrls) ? item.mediaUrls : (item.mediaUrl ? [item.mediaUrl] : []);
+                // decide which URLs to render metadata for:
+                // prefer mediaUrls if non-empty; otherwise if mediaUrl exists use that as single-element array
+                const urls = (Array.isArray(item.mediaUrls) && item.mediaUrls.length)
+                    ? item.mediaUrls
+                    : (item.mediaUrl ? [item.mediaUrl] : []);
                 renderMetaBlocks(urls, Array.isArray(item.mediaMeta) ? item.mediaMeta : []);
             } catch (err) {
                 console.error('onEdit error', err);

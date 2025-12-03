@@ -337,17 +337,17 @@
     "thumbnailUrl": "/static/cat_2.jpg",
     "mediaMeta": [
       {
-        "name": "",
-        "age": "",
-        "gender": "",
-        "location": "",
-        "breed": "",
-        "neutered": "",
-        "status": "",
-        "shortDescription": ""
+        "name": "Purple",
+        "age": "2 years",
+        "gender": "Female",
+        "location": "Singapore",
+        "breed": "NA",
+        "neutered": "NA",
+        "status": "Adopted",
+        "shortDescription": "Cute and clumsy"
       }
     ],
     "createdAt": "2025-12-03T04:40:29.341Z",
-    "updatedAt": "2025-12-03T04:41:08.940Z"
+    "updatedAt": "2025-12-03T05:41:16.245Z"
   }
 ]
