@@ -67,7 +67,7 @@
     ],
     "thumbnailUrl": "/static/dog_thumbnail.jpg",
     "createdAt": "2025-12-05T10:05:00Z",
-    "updatedAt": "2025-12-05T10:05:00Z",
+    "updatedAt": "2025-12-03T04:16:35.376Z",
     "mediaMeta": [
       {
         "name": "Rex",
@@ -100,34 +100,6 @@
         "shortDescription": "Playful and affectionate — enjoys cuddles."
       }
     ]
-  },
-  {
-    "id": 3,
-    "type": "video",
-    "title": "Intro (YouTube)",
-    "description": "Adopt a cat to cook for you",
-    "status": "published",
-    "tags": [
-      "intro",
-      "video"
-    ],
-    "mediaUrl": "https://www.youtube.com/shorts/qOg_8jPC_wU?feature=share",
-    "thumbnailUrl": "/static/cat_thumbnail.jpg",
-    "createdAt": "2025-12-05T11:00:00Z",
-    "updatedAt": "2025-12-03T02:50:51.587Z",
-    "mediaMeta": [
-      {
-        "name": "",
-        "age": "",
-        "gender": "",
-        "location": "",
-        "breed": "",
-        "neutered": "",
-        "status": "",
-        "shortDescription": ""
-      }
-    ],
-    "mediaUrls": []
   },
   {
     "id": 4,
@@ -332,29 +304,9 @@
       "fish",
       "pet"
     ],
-    "mediaUrls": [
-      "/video/fish_video.mp4"
-    ],
-    "thumbnailUrl": "",
-    "mediaMeta": [],
-    "createdAt": "2025-12-03T02:56:55.412Z",
-    "updatedAt": "2025-12-03T03:36:34.430Z",
-    "mediaUrl": "/video/fish_video.mp4"
-  },
-  {
-    "id": 9,
-    "type": "image",
-    "title": "Pet",
-    "description": "pet",
-    "status": "draft",
-    "tags": [
-      "pet",
-      "pet"
-    ],
-    "mediaUrls": [
-      "https://media.istockphoto.com/id/1417882544/photo/large-group-of-cats-and-dogs-looking-at-the-camera-on-blue-background.jpg?s=612x612&w=0&k=20&c=kGKANSIFdNfhBJMipyuaKU4BcVE1oELWev9lF2ickE0="
-    ],
-    "thumbnailUrl": "",
+    "mediaUrls": [],
+    "mediaUrl": "/video/fish_video.mp4",
+    "thumbnailUrl": "/static/fish2.jpg",
     "mediaMeta": [
       {
         "name": "",
@@ -367,7 +319,35 @@
         "shortDescription": ""
       }
     ],
-    "createdAt": "2025-12-03T03:14:21.754Z",
-    "updatedAt": "2025-12-03T03:15:35.309Z"
+    "createdAt": "2025-12-03T04:39:00.365Z",
+    "updatedAt": "2025-12-03T04:39:28.323Z"
+  },
+  {
+    "id": 9,
+    "type": "video",
+    "title": "Pet",
+    "description": "Annie and her cat",
+    "status": "published",
+    "tags": [
+      "cat",
+      "owner"
+    ],
+    "mediaUrls": [],
+    "mediaUrl": "https://www.youtube.com/shorts/2iQxQHF5fhw",
+    "thumbnailUrl": "/static/cat_2.jpg",
+    "mediaMeta": [
+      {
+        "name": "",
+        "age": "",
+        "gender": "",
+        "location": "",
+        "breed": "",
+        "neutered": "",
+        "status": "",
+        "shortDescription": ""
+      }
+    ],
+    "createdAt": "2025-12-03T04:40:29.341Z",
+    "updatedAt": "2025-12-03T04:41:08.940Z"
   }
 ]

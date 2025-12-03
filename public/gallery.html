@@ -202,38 +202,47 @@
             return null;
         }
 
-        async function renderIntro(items) {
+        async function renderIntro() {
             const introWrap = document.getElementById('intro-wrap');
             introWrap.innerHTML = '';
-            // find a published video (prefer an explicit mediaUrl, fall back to mediaUrls[0])
-            const firstVideo = (items || []).find(i => String(i.type) === 'video' && String(i.status) === 'published');
-            if (!firstVideo) { introWrap.style.display = 'none'; return; }
             introWrap.style.display = '';
 
-            // Resolve the best media URL
-            const candidateUrl = firstVideo.mediaUrl || (Array.isArray(firstVideo.mediaUrls) && firstVideo.mediaUrls[0]) || '';
-            const thumb = firstVideo.thumbnailUrl || ''; // optional poster
+            // --- Hardcoded intro video URL ---
+            const HARDCODED_INTRO_URL = "https://www.youtube.com/shorts/qOg_8jPC_wU?feature=share";
 
-            // Try YouTube embed, otherwise use <video>
-            const yt = extractYouTubeId(candidateUrl);
+            // optional: if you have a static thumbnail for intro video
+            const HARDCODED_THUMBNAIL = "";
+
+            // Try YouTube embed conversion
+            const yt = extractYouTubeId(HARDCODED_INTRO_URL);
+
             if (yt) {
                 const iframe = document.createElement('iframe');
-                iframe.src = 'https://www.youtube.com/embed/' + yt + '?autoplay=1&mute=1&rel=0&controls=1&modestbranding=1';
+                iframe.src =
+                    'https://www.youtube.com/embed/' +
+                    yt +
+                    '?autoplay=1&mute=1&rel=0&controls=1&modestbranding=1';
                 iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; clipboard-write');
                 iframe.setAttribute('title', 'Adoption centre intro video');
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
                 introWrap.appendChild(iframe);
             } else {
+                // fallback to native <video>
                 const video = document.createElement('video');
-                video.src = candidateUrl;
-                if (thumb) video.setAttribute('poster', thumb);
-                video.muted = true; video.autoplay = true; video.loop = true; video.playsInline = true; video.controls = true;
+                video.src = HARDCODED_INTRO_URL;
+                if (HARDCODED_THUMBNAIL) video.setAttribute('poster', HARDCODED_THUMBNAIL);
+                video.muted = true;
+                video.autoplay = true;
+                video.loop = true;
+                video.playsInline = true;
+                video.controls = true;
                 video.style.width = '100%';
                 introWrap.appendChild(video);
-                // play silently if browser allows
+
                 video.play().catch(() => { });
             }
         }
-
 
         async function renderThumbs(items) {
             const wrap = document.getElementById('thumbs');
@@ -296,7 +305,6 @@
                 wrap.appendChild(a);
             });
         }
-
 
         (async function init() {
             try {

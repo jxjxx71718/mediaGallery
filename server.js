@@ -125,12 +125,11 @@ app.post('/api/media', (req, res) => {
     const nextId = data.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0) + 1;
     const now = new Date().toISOString();
 
-    // ensure arrays exist for mediaUrls if single mediaUrl provided
-    let mediaUrls = [];
-    if (Array.isArray(payload.mediaUrls)) mediaUrls = payload.mediaUrls.slice();
-    else if (payload.mediaUrl) mediaUrls = [payload.mediaUrl];
+    // IMPORTANT: do NOT auto-promote payload.mediaUrl into mediaUrls.
+    const mediaUrls = Array.isArray(payload.mediaUrls) ? payload.mediaUrls.slice() : [];
+    const mediaUrl = (payload.mediaUrl && String(payload.mediaUrl).trim()) ? String(payload.mediaUrl).trim() : undefined;
 
-    // prepare mediaMeta: if provided and array use it, otherwise create same-length empty objects
+    // prepare mediaMeta: if provided and array use it, otherwise create same-length empty objects for mediaUrls
     let mediaMeta = Array.isArray(payload.mediaMeta) ? payload.mediaMeta.slice() : [];
     if (!mediaMeta.length && mediaUrls.length) {
       mediaMeta = mediaUrls.map(() => ({}));
@@ -143,8 +142,8 @@ app.post('/api/media', (req, res) => {
       description: payload.description || '',
       status: payload.status || 'draft',
       tags: Array.isArray(payload.tags) ? payload.tags : (payload.tags ? [String(payload.tags)] : []),
-      mediaUrls: mediaUrls,
-      mediaUrl: !mediaUrls.length && payload.mediaUrl ? payload.mediaUrl : undefined,
+      mediaUrls: mediaUrls,        // exactly what admin provided for images
+      mediaUrl: mediaUrl,          // exactly what admin provided for single media (video)
       thumbnailUrl: payload.thumbnailUrl || '',
       mediaMeta: mediaMeta,
       createdAt: now,
@@ -159,6 +158,7 @@ app.post('/api/media', (req, res) => {
     res.status(500).json({ error: 'failed to create item' });
   }
 });
+
 
 // PUT update existing
 app.put('/api/media/:id', (req, res) => {
